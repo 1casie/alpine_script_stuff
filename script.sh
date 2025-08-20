@@ -6,7 +6,7 @@ USER="$(whoami)"
 if [ "$ACTION" = "install" ]; then
     set -e
     apk update
-    apk add --no-cache bash nodejs npm python3 gcc make git curl neovim musl-dev
+    apk add --no-cache bash nodejs npm python3 gcc make git curl neovim musl-dev util-linux
 
     # Change shell to bash
     chsh -s /bin/bash "$USER"
