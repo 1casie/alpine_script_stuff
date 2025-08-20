@@ -10,7 +10,7 @@ fi
 if [ "$ACTION" = "install" ]; then
     set -e
     apk update
-    apk add --no-cache bash nodejs npm python3 gcc make git curl neovim musl-dev util-linux coreutils findutils grep gawk sed diffutils procps-ng iputils net-tools shadow sudo openssh wget tar bzip2 xz zip unzip htop tmux rsync cronie bc less iproute2 lsof iptables bind-tools tcpdump openssl gnupg postgresql-client btrfs-progs ntfs-3g docker docker-cli-compose
+    apk add --no-cache bash nodejs npm python3 gcc make git curl neovim musl-dev util-linux coreutils findutils grep gawk sed diffutils procps-ng iputils net-tools shadow sudo openssh wget tar bzip2 xz zip unzip htop tmux rsync cronie bc less iproute2 lsof iptables bind-tools tcpdump openssl gnupg postgresql-client btrfs-progs ntfs-3g docker docker-cli-compose nginx
 
     # Change shell to bash for root
     chsh -s /bin/bash root
@@ -76,7 +76,7 @@ elif [ "$ACTION" = "restore" ]; then
     rc-update del docker default
 
     # Remove all installed packages
-    apk del --no-cache bash nodejs npm python3 gcc make git curl neovim musl-dev util-linux coreutils findutils grep gawk sed diffutils procps-ng iputils net-tools shadow sudo openssh wget tar bzip2 xz zip unzip htop tmux rsync cronie bc less iproute2 lsof iptables bind-tools tcpdump openssl gnupg postgresql-client btrfs-progs ntfs-3g docker docker-cli-compose
+    apk del --no-cache bash nodejs npm python3 gcc make git curl neovim musl-dev util-linux coreutils findutils grep gawk sed diffutils procps-ng iputils net-tools shadow sudo openssh wget tar bzip2 xz zip unzip htop tmux rsync cronie bc less iproute2 lsof iptables bind-tools tcpdump openssl gnupg postgresql-client btrfs-progs ntfs-3g docker docker-cli-compose nginx
 
     # Restore shell to ash
     chsh -s /bin/ash root
