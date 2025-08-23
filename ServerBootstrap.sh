@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 ACTION="$1"
 
-if [ "$(id -u)" != "0" ]; then
+if [[ "$(id -u)" != "0" ]]; then
     echo "This script must be run as root."
     exit 1
 fi
@@ -15,23 +15,23 @@ tar bzip2 xz zip unzip less iproute2 lsof openssh openssl gnupg docker-cli-compo
 SERVICES="docker nginx php-fpm sshd crond"
 
 start_service() {
-    SERVICE=$1
-    service $SERVICE start || true
+    local SERVICE="$1"
+    service "$SERVICE" start || true
 }
 
 stop_service() {
-    SERVICE=$1
-    service $SERVICE stop || true
+    local SERVICE="$1"
+    service "$SERVICE" stop || true
 }
 
-if [ "$ACTION" = "install" ]; then
+if [[ "$ACTION" == "add" ]]; then
     set -e
 
-    # Update and install packages
+    echo "Installing minimal server environment..."
     apk update
     apk add --no-cache $PACKAGES
 
-    # Keep ash as default shell unless bash is specifically needed
+    # Change shell to bash for root
     chsh -s /bin/bash root
 
     # Install Rust if not present
@@ -43,12 +43,11 @@ if [ "$ACTION" = "install" ]; then
 
     # Disable all services at boot to save RAM
     for SVC in $SERVICES; do
-        rc-update del $SVC default 2>/dev/null || true
-        stop_service $SVC
+        rc-update del "$SVC" default 2>/dev/null || true
+        stop_service "$SVC"
     done
 
-    echo "Minimal server setup complete."
-    echo "Installed versions:"
+    echo "Server bootstrap complete. Installed versions:"
     bash --version | head -1
     node --version
     npm --version
@@ -59,19 +58,23 @@ if [ "$ACTION" = "install" ]; then
     rustc --version
     docker --version || echo "Docker CLI only"
     nginx -v || echo "Nginx installed"
+
+    echo
     echo "Services are installed but not started to minimize RAM usage."
     echo "Start them manually as needed, e.g.:"
     echo "  service php-fpm start"
     echo "  service nginx start"
     echo "  service docker start"
 
-elif [ "$ACTION" = "restore" ]; then
+elif [[ "$ACTION" == "del" ]]; then
     set +e
+
+    echo "Restoring minimal environment..."
 
     # Stop services if running
     for SVC in $SERVICES; do
-        stop_service $SVC
-        rc-update del $SVC default 2>/dev/null || true
+        stop_service "$SVC"
+        rc-update del "$SVC" default 2>/dev/null || true
     done
 
     # Remove installed packages
@@ -83,7 +86,7 @@ elif [ "$ACTION" = "restore" ]; then
     # Restore shell to ash
     chsh -s /bin/ash root
 
-    echo "Environment restored to minimal scratch."
+    echo "Environment fully restored to minimal scratch."
 else
-    echo "Usage: sh $0 [install|restore]"
+    echo "Usage: $0 [add|del]"
 fi
