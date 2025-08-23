@@ -7,12 +7,11 @@ if [[ "$(id -u)" != "0" ]]; then
     exit 1
 fi
 
-# Minimal necessary packages for a PHP + Node.js + Nginx server
-PACKAGES="bash nodejs npm python3 gcc make git curl micro musl-dev coreutils findutils grep sed util-linux \
-tar bzip2 xz zip unzip less iproute2 lsof openssh openssl gnupg docker-cli-compose nginx php php-fpm"
+# Full package list from original script
+PACKAGES="bash nodejs npm python3 gcc make git curl neovim musl-dev util-linux coreutils findutils grep gawk sed diffutils procps-ng iputils net-tools shadow sudo openssh wget tar bzip2 xz zip unzip htop tmux rsync cronie bc less iproute2 lsof iptables bind-tools tcpdump openssl gnupg postgresql-client btrfs-progs ntfs-3g docker docker-cli-compose nginx"
 
-# Services to optionally start
-SERVICES="docker nginx php-fpm sshd crond"
+# Services to optionally start (won't auto-start to save RAM)
+SERVICES="docker nginx sshd crond"
 
 start_service() {
     local SERVICE="$1"
@@ -27,44 +26,43 @@ stop_service() {
 if [[ "$ACTION" == "add" ]]; then
     set -e
 
-    echo "Installing minimal server environment..."
+    echo "Installing full server environment..."
     apk update
     apk add --no-cache $PACKAGES
 
-    # Change shell to bash for root
-    chsh -s /bin/bash root
-
     # Install Rust if not present
     if ! command -v rustc >/dev/null 2>&1; then
+        echo "Installing Rust..."
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         export PATH="/root/.cargo/bin:$PATH"
         echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> /root/.bashrc
     fi
 
-    # Disable all services at boot to save RAM
+    # Disable services at boot to minimize RAM usage
     for SVC in $SERVICES; do
         rc-update del "$SVC" default 2>/dev/null || true
         stop_service "$SVC"
     done
 
-    echo "Server bootstrap complete. Installed versions:"
+    echo "Server bootstrap complete."
+    echo "Installed versions:"
     bash --version | head -1
     node --version
     npm --version
     python3 --version
     gcc --version | head -1
     git --version
-    php -v
     rustc --version
     docker --version || echo "Docker CLI only"
     nginx -v || echo "Nginx installed"
 
     echo
     echo "Services are installed but not started to minimize RAM usage."
-    echo "Start them manually as needed, e.g.:"
-    echo "  service php-fpm start"
-    echo "  service nginx start"
+    echo "Start them manually as needed:"
     echo "  service docker start"
+    echo "  service nginx start"
+    echo "  service sshd start"
+    echo "  service crond start"
 
 elif [[ "$ACTION" == "del" ]]; then
     set +e
@@ -77,16 +75,13 @@ elif [[ "$ACTION" == "del" ]]; then
         rc-update del "$SVC" default 2>/dev/null || true
     done
 
-    # Remove installed packages
+    # Remove all installed packages
     apk del --no-cache $PACKAGES
 
     # Remove Rust
     rm -rf /root/.cargo /root/.rustup
 
-    # Restore shell to ash
-    chsh -s /bin/ash root
-
-    echo "Environment fully restored to minimal scratch."
+    echo "Environment restored to minimal scratch."
 else
     echo "Usage: $0 [add|del]"
 fi
